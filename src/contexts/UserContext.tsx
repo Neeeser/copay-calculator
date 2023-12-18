@@ -1,24 +1,29 @@
-// src/contexts/UserContext.tsx
 import React, { createContext, useContext, useState } from 'react';
 
-// Define the shape of your user state
 interface UserState {
     username: string;
     userId: number;
 }
 
-// Create the context with a default value
-const UserContext = createContext<UserState | null>(null);
+interface UserContextType {
+    user: UserState | null;
+    setUser: React.Dispatch<React.SetStateAction<UserState | null>>;
+}
 
-// Create a provider component
-export const UserProvider: React.FC = ({ children }) => {
+const UserContext = createContext<UserContextType | null>(null);
+
+export const UserProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
     const [user, setUser] = useState<UserState | null>(null);
 
-    // The value that will be given to the context
     const value = { user, setUser };
 
     return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };
 
-// Export the useContext hook for your user context
-export const useUser = () => useContext(UserContext);
+export const useUser = () => {
+    const context = useContext(UserContext);
+    if (!context) {
+        throw new Error('useUser must be used within a UserProvider');
+    }
+    return context;
+};

@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 
-import ThemeModeToggler from 'components/ThemeModeToggler';
+//import ThemeModeToggler from 'components/ThemeModeToggler';
 
 interface Props {
   colorInvert?: boolean;
@@ -59,9 +59,7 @@ const TopNav = ({ colorInvert = false }: Props): JSX.Element => {
           Docs
         </Link>
       </Box>
-      <Box>
-        <ThemeModeToggler />
-      </Box>
+
     </Box>
   );
 };

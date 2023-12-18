@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 interface Props {
   children: React.ReactNode;
   // All other props
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [x: string]: any;
 }
 

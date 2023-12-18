@@ -43,18 +43,18 @@ export const createUser = async (username: string, password: string) => {
 };
 
 
-export async function updateUserConfig(userId: string, newConfig: UserConfig) {
-    await sql`UPDATE configurations SET config_data = ${newConfig} WHERE user_id = ${userId}`;
-}
+// export async function updateUserConfig(userId: string, newConfig: UserConfig) {
+//     await sql`UPDATE configurations SET config_data = ${newConfig} WHERE user_id = ${userId}`;
+// }
 
 export async function getInsuranceData(userId: string) {
     const { rows } = await sql`SELECT insurance_data FROM insurance WHERE user_id = ${userId}`;
     return rows;
 }
 
-export async function updateToothValues(userId: string, newToothValues: ToothValues) {
-    await sql`UPDATE tooth_values SET tooth_data = ${newToothValues} WHERE user_id = ${userId}`;
-}
+// export async function updateToothValues(userId: string, newToothValues: ToothValues) {
+//     await sql`UPDATE tooth_values SET tooth_data = ${newToothValues} WHERE user_id = ${userId}`;
+// }
 
 export async function verifyUser(username: string, password: string): Promise<UserType | null> {
     // Retrieve the user and their hashed password from the database
