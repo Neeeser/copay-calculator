@@ -106,7 +106,7 @@ const CopayCalculator = () => {
     };
 
 
-
+    
     const calculateInsurancePay = () => {
         // Parse values to ensure they are numbers
         if (isDeductibleUsed === 'No') {

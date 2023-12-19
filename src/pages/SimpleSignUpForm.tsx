@@ -20,14 +20,23 @@ const SimpleSignUpForm = (): JSX.Element => {
   const [validationMessage, setValidationMessage] = useState('');
 
   const handleSubmit = async (event: React.FormEvent) => {
+
     event.preventDefault();
     const target = event.target as typeof event.target & {
       username: { value: string };
       password: { value: string };
     };
+
+    validateUsername(target.username.value);
+    if (!usernameValid) {
+      console.log("Username is invalid, can't proceed.");
+      return; // Prevent form submission
+    }
+
+
     const username = target.username.value; // get username from form
     const password = target.password.value; // get password from form
-
+    validateUsername(username);
     if (!usernameValid) {
       console.log("Username is invalid, can't proceed.");
       return; // Prevent form submission

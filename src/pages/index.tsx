@@ -18,35 +18,59 @@ import { useRouter } from 'next/router';
 const SimpleSignInForm = (): JSX.Element => {
     const [loginInfo, setLoginInfo] = useState({ username: '', password: '' });
     const [rememberMe, setRememberMe] = useState(false);
+    const [error, setError] = useState(''); // State to hold login error messages
     const router = useRouter();
 
     const { setUser } = useUser(); // This is how you get access to the setUser function
+    const isFormValid = loginInfo.username && loginInfo.password;
 
-    const handleLogin = async (event: React.FormEvent) => {
+    // Assuming loginInfo, setUser, and rememberMe are defined in your component
+
+    const handleLogin = async (event: React.SyntheticEvent) => {
         event.preventDefault();
+        setError(''); // Clear any existing errors
+        if (!loginInfo.username || !loginInfo.password) {
+            setError('Please enter both username and password.');
+            return;
+        }
+
         try {
-            const result = await verifyUser(loginInfo.username, loginInfo.password);
-            if (result) {
+            const response = await fetch('/api/user/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: loginInfo.username,
+                    password: loginInfo.password,
+                    rememberMe: rememberMe,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
                 // Update the global user state
                 setUser({
-                    username: result.username,
-                    userId: result.userId,
+                    username: data.user.username,
+                    userId: data.user.userId,
                 });
 
-                // If 'Remember Me' is checked, store the user information in local storage
-                if (rememberMe) {
-                    localStorage.setItem('currentUser', JSON.stringify(result));
-                }
-
-                console.log('Login successful:', result);
-                // Potentially redirect the user to the home page or dashboard here
+                console.log('Login successful:', data.user);
+                // Redirect to the dashboard or home page
+                router.push('/dashboard'); // Use Next.js router for navigation
             } else {
-                console.log('Login failed: Invalid username or password');
+                setError(data.error || 'Failed to log in. Please try again.');
+                console.log('Login failed:', data.error);
             }
         } catch (error) {
+            setError('An error occurred. Please try again.');
             console.error('Login error:', error);
         }
     };
+
+
+
 
     return (
         <Box bgcolor={'alternate.main'}>
@@ -74,12 +98,15 @@ const SimpleSignInForm = (): JSX.Element => {
                         Login to manage your account.
                     </Typography>
                 </Box>
+
+
+
                 <Card sx={{ p: { xs: 4, md: 6 } }}>
                     <form onSubmit={handleLogin}>
                         <Grid container spacing={4}>
                             <Grid item xs={12}>
                                 <Typography variant={'subtitle2'} sx={{ marginBottom: 2 }}>
-                                    Enter your email
+                                    Enter your username
                                 </Typography>
                                 <TextField
                                     label="Username *"
@@ -116,6 +143,14 @@ const SimpleSignInForm = (): JSX.Element => {
                                     onChange={(e) => setLoginInfo({ ...loginInfo, password: e.target.value })}
                                 />
                             </Grid>
+                            {error && (
+                                <Box marginBottom={{ xs: 1, sm: 0 }}>
+                                    <Typography variant={'subtitle2'}>
+                                        {error}
+                                    </Typography>
+                                </Box>
+                            )}
+
                             <Grid item container xs={12}>
                                 <Box
                                     display="flex"
@@ -156,7 +191,7 @@ const SimpleSignInForm = (): JSX.Element => {
                                             </Typography>
                                         }
                                     />
-                                    <Button size={'large'} variant={'contained'} type={'submit'}>
+                                    <Button size={'large'} variant={'contained'} type={'submit'} disabled={!isFormValid} >
                                         Login
                                     </Button>
                                 </Box>
