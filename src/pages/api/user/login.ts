@@ -23,6 +23,10 @@ export default async function handler(
     res: NextApiResponse<LoginSuccessResponse | ErrorResponse>
 ) {
     if (req.method === 'POST') {
+        // Check for JWT_SECRET and send error if not found
+        if (!process.env.JWT_SECRET) {
+            return res.status(500).json({ error: 'No JWT_SECRET' });
+        }
         try {
             const { username, password, rememberMe } = req.body;
 
