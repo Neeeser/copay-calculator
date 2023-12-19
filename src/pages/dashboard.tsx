@@ -1,51 +1,48 @@
 // pages/dashboard.tsx
 
 import { GetServerSideProps } from 'next';
+import Topbar from '../components/Topbar'; // Import the Topbar component
+import DashboardCard from '../components/DashboardCard';
+import React from 'react';
+import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-    const cookie = ctx.req.headers.cookie;
-    // Check if the cookie is present
-    if (!cookie) {
-        // Redirect if no cookie is found
-        return {
-            redirect: {
-                destination: '/',
-                permanent: false,
-            },
-        };
-    }
+import { withAuth } from '../utils/withAuth';
 
-    const dev = process.env.NODE_ENV !== 'production';
-    const server = dev ? 'http://localhost:3000' : 'https://copay-calculator.vercel.app/';
-    const apiUrl = `${server}/api/user/validate_token`;
-    console.log('apiUrl', apiUrl);
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Cookie': ctx.req.headers.cookie || '',
-        },
-    });
+export const getServerSideProps = withAuth();
 
-    //console.log('response', response);
-    // Redirect if the validation fails
-    if (!response.ok) {
-        return {
-            redirect: {
-                destination: '/',
-                permanent: false,
-            },
-        };
-    }
-
-    // Proceed to render the Dashboard if validation is successful
-    return {
-        props: {},
-    };
-};
 
 const Dashboard = () => {
-    return <h1>You are logged in</h1>;
+    return (
+
+        <Box
+            sx={{
+                minHeight: '100vh',
+                width: '100%',
+                // Gradient starts with white and transitions to blue towards the bottom
+                backgroundImage: 'linear-gradient(180deg, hsla(0, 0%, 100%, 1) 0%, hsla(215, 100%, 95%, 1) 50%, hsla(215, 100%, 85%, 1) 100%)',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: 'cover',
+                backgroundAttachment: 'fixed',
+                m: 0,
+                p: 0,
+                overflowX: 'hidden',
+            }}
+        >
+            <Topbar />
+            <Grid container spacing={2} sx={{ padding: 2 }}>
+                <Grid item xs={12} sm={6} md={4}>
+                    <DashboardCard title="Calculator" link="/calculator" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                    <DashboardCard title="Insurance" link="/insurance" />
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                    <DashboardCard title="Tooth Prices" link="/tooth-prices" />
+                </Grid>
+            </Grid>
+        </Box>
+    );
 };
 
 export default Dashboard;

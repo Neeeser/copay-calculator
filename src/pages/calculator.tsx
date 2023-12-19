@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Parallax from 'react-parallax-tilt';
+import { useTheme } from '@mui/material/styles';
+import Topbar from '../components/Topbar';
+import { withAuth } from '../utils/withAuth';
+
+export const getServerSideProps = withAuth();
 
 import {
     Card,
@@ -17,6 +22,7 @@ import {
 import { calculatePatientCopayInNetwork } from '@/utils/calculations';
 
 const CopayCalculator = () => {
+    const theme = useTheme();
 
     // Assumed values for illustration. Replace with actual values from your spreadsheet
     const procedureCosts = {
@@ -106,7 +112,7 @@ const CopayCalculator = () => {
     };
 
 
-    
+
     const calculateInsurancePay = () => {
         // Parse values to ensure they are numbers
         if (isDeductibleUsed === 'No') {
@@ -135,117 +141,131 @@ const CopayCalculator = () => {
 
 
     return (
-        <Box p={4}>
-            <Card>
-                <Box p={4}>
-                    <Typography variant="h4" gutterBottom>
-                        Copay Calculator
-                    </Typography>
-                    <Grid container spacing={2}>
-                        {/* Tooth Type Dropdown */}
-                        <Grid item xs={12} md={6}>
-                            <FormControl fullWidth>
-                                <InputLabel>Tooth Type</InputLabel>
-                                <Select
-                                    value={selectedTooth}
-                                    label="Tooth Type"
-                                    onChange={(e) => setSelectedTooth(e.target.value)}
-                                >
-                                    <MenuItem value="Molar">Molar</MenuItem>
-                                    <MenuItem value="Premolar">Premolar</MenuItem>
-                                    <MenuItem value="Anterior">Anterior</MenuItem>
-                                    {/* ... other tooth types */}
-                                </Select>
-                            </FormControl>
-                        </Grid>
+        <>
+            <Topbar />
 
-                        {/* Benefits Remaining Input */}
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Benefits Remaining ($)"
-                                type="number"
-                                fullWidth
-                                value={benefitsRemaining}
-                                onChange={(e) => setBenefitsRemaining(e.target.value)}
-                            />
-                        </Grid>
+            <Box p={4}>
+                <Card>
+                    <Box p={4}>
+                        <Typography variant="h4" gutterBottom>
+                            Copay Calculator
+                        </Typography>
+                        <Grid container spacing={2}>
+                            {/* Tooth Type Dropdown */}
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel>Tooth Type</InputLabel>
+                                    <Select
+                                        value={selectedTooth}
+                                        label="Tooth Type"
+                                        onChange={(e) => setSelectedTooth(e.target.value)}
+                                    >
+                                        <MenuItem value="Molar">Molar</MenuItem>
+                                        <MenuItem value="Premolar">Premolar</MenuItem>
+                                        <MenuItem value="Anterior">Anterior</MenuItem>
+                                        {/* ... other tooth types */}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
 
-                        {/* Contracted Fee Percentage Input */}
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Contracted Fee (%)"
-                                type="number"
-                                fullWidth
-                                value={contractedFeePercentage}
-                                onChange={(e) => setContractedFeePercentage(e.target.value)}
-                            />
-                        </Grid>
+                            {/* Benefits Remaining Input */}
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    label="Benefits Remaining ($)"
+                                    type="number"
+                                    fullWidth
+                                    value={benefitsRemaining}
+                                    onChange={(e) => setBenefitsRemaining(e.target.value)}
+                                />
+                            </Grid>
 
-                        {/* Deductible Input */}
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                label="Deductible ($)"
-                                type="number"
-                                fullWidth
-                                value={deductible}
-                                onChange={(e) => setDeductible(e.target.value)}
-                            />
-                        </Grid>
+                            {/* Contracted Fee Percentage Input */}
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    label="Contracted Fee (%)"
+                                    type="number"
+                                    fullWidth
+                                    value={contractedFeePercentage}
+                                    onChange={(e) => setContractedFeePercentage(e.target.value)}
+                                />
+                            </Grid>
 
-                        {/* Deductible Already Used Dropdown */}
-                        <Grid item xs={12} md={6}>
-                            <FormControl fullWidth>
-                                <InputLabel>Deductible Already Used</InputLabel>
-                                <Select
-                                    value={isDeductibleUsed}
-                                    label="Deductible Already Used"
-                                    onChange={(e) => setIsDeductibleUsed(e.target.value)}
-                                >
-                                    <MenuItem value="Yes">Yes</MenuItem>
-                                    <MenuItem value="No">No</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
+                            {/* Deductible Input */}
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    label="Deductible ($)"
+                                    type="number"
+                                    fullWidth
+                                    value={deductible}
+                                    onChange={(e) => setDeductible(e.target.value)}
+                                />
+                            </Grid>
 
-                        {/* Calculate Button */}
-                        <Grid item xs={12}>
-                            <Button variant="contained" color="primary" onClick={handleCalculate}>
-                                Calculate
-                            </Button>
+                            {/* Deductible Already Used Dropdown */}
+                            <Grid item xs={12} md={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel>Deductible Already Used</InputLabel>
+                                    <Select
+                                        value={isDeductibleUsed}
+                                        label="Deductible Already Used"
+                                        onChange={(e) => setIsDeductibleUsed(e.target.value)}
+                                    >
+                                        <MenuItem value="Yes">Yes</MenuItem>
+                                        <MenuItem value="No">No</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            {/* Calculate Button */}
+                            <Grid item xs={12}>
+                                <Button variant="contained" color="primary" onClick={handleCalculate}>
+                                    Calculate
+                                </Button>
+                            </Grid>
+
                         </Grid>
+                    </Box>
+                </Card>
+
+                {/* Results Display */}
+                <Grid container spacing={3} component="div">
+                    <Grid item xs={12}>
 
                     </Grid>
-                </Box>
-            </Card>
-
-            {/* Results Display */}
-            <Grid container spacing={3} component="div">
-                <Grid item xs={12}>
-
+                    {[
+                        { title: 'Uninsured Cost', value: displayResults.uninsuredCost },
+                        { title: 'Patient Copay (In Network)', value: displayResults.inNetworkCopay },
+                        { title: 'Insurance Pay', value: displayResults.insurancePay },
+                        { title: 'Patient Copay (Out of Network)', value: displayResults.outNetworkCopay },
+                    ].map((item, index) => (
+                        <Grid key={index} item xs={12} sm={6} md={3} style={{ justifyContent: 'center' }}>
+                            <Parallax tiltMaxAngleX={5} tiltMaxAngleY={5}>
+                                <Card style={{
+                                    maxWidth: '100%', // Maximum width is 100% of its parent container
+                                    height: '400px', // Height is automatic based on its content
+                                    borderRadius: '20px',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    backgroundColor: theme.palette.common.white,
+                                    margin: 'auto', // Center the card in its grid cell
+                                }}>
+                                    <CardContent>
+                                        <Typography variant="h5" align="center">
+                                            {item.title}
+                                        </Typography>
+                                        <Typography variant="h4" align="center" color="primary">
+                                            ${isNaN(item.value) || item.value === null ? '0' : item.value.toFixed(2)}
+                                        </Typography>
+                                    </CardContent>
+                                </Card>
+                            </Parallax>
+                        </Grid>
+                    ))}
                 </Grid>
-                {[
-                    { title: 'Uninsured Cost', value: displayResults.uninsuredCost },
-                    { title: 'Patient Copay (In Network)', value: displayResults.inNetworkCopay },
-                    { title: 'Insurance Pay', value: displayResults.insurancePay },
-                    { title: 'Patient Copay (Out of Network)', value: displayResults.outNetworkCopay },
-                ].map((item, index) => (
-                    <Grid key={index} item xs={12} sm={6} md={3} style={{ display: 'flex', justifyContent: 'center' }}>
-                        <Parallax tiltMaxAngleX={5} tiltMaxAngleY={5}>
-                            <Card style={{ borderRadius: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '250px', height: '200px' }}>
-                                <CardContent>
-                                    <Typography variant="h5" align="center">
-                                        {item.title}
-                                    </Typography>
-                                    <Typography variant="h4" align="center" color="primary">
-                                        ${isNaN(item.value) || item.value === null ? '0' : item.value.toFixed(2)}
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </Parallax>
-                    </Grid>
-                ))}
-            </Grid>
-        </Box>
+            </Box>
+        </>
     );
 };
 
