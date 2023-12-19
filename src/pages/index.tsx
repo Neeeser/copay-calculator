@@ -6,30 +6,40 @@ import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import Link from '@mui/material/Link';
+import Link from 'next/link';
+import MuiLink from '@mui/material/Link';
 import Container from '../components/Container';
 import { verifyUser } from '../utils/database';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-
+import { useUser } from '../contexts/UserContext';
+import { useRouter } from 'next/router';
 
 const SimpleSignInForm = (): JSX.Element => {
     const [loginInfo, setLoginInfo] = useState({ username: '', password: '' });
     const [rememberMe, setRememberMe] = useState(false);
+    const router = useRouter();
+
+    const { setUser } = useUser(); // This is how you get access to the setUser function
 
     const handleLogin = async (event: React.FormEvent) => {
         event.preventDefault();
-        // Call verifyUser from your database.ts with loginInfo
         try {
             const result = await verifyUser(loginInfo.username, loginInfo.password);
             if (result) {
+                // Update the global user state
+                setUser({
+                    username: result.username,
+                    userId: result.userId,
+                });
+
                 // If 'Remember Me' is checked, store the user information in local storage
                 if (rememberMe) {
                     localStorage.setItem('currentUser', JSON.stringify(result));
                 }
-                // Update your user context or global state here as well
-                // setUser(result);
+
                 console.log('Login successful:', result);
+                // Potentially redirect the user to the home page or dashboard here
             } else {
                 console.log('Login failed: Invalid username or password');
             }
@@ -94,16 +104,7 @@ const SimpleSignInForm = (): JSX.Element => {
                                             Enter your password
                                         </Typography>
                                     </Box>
-                                    <Typography variant={'subtitle2'}>
-                                        <Link
-                                            component={'a'}
-                                            color={'primary'}
-                                            href={'#'}
-                                            underline={'none'}
-                                        >
-                                            Forgot your password?
-                                        </Link>
-                                    </Typography>
+
                                 </Box>
                                 <TextField
                                     label="Password *"
@@ -128,14 +129,16 @@ const SimpleSignInForm = (): JSX.Element => {
                                     <Box marginBottom={{ xs: 1, sm: 0 }}>
                                         <Typography variant={'subtitle2'}>
                                             Don't have an account yet?{' '}
-                                            <Link
-                                                component={'a'}
+                                            <MuiLink
                                                 color={'primary'}
-                                                href={'#'}
                                                 underline={'none'}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    router.push('/SimpleSignUpForm');
+                                                }}
                                             >
                                                 Sign up here.
-                                            </Link>
+                                            </MuiLink>
                                         </Typography>
                                     </Box>
                                     <FormControlLabel

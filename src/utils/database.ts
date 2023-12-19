@@ -30,8 +30,8 @@ export async function getUserData(userId: string) {
 }
 
 export const createUser = async (username: string, password: string) => {
+    console.log(process.env.POSTGRES_URL)
     const hashedPassword = await bcrypt.hash(password, 10);
-
     // Insert new user
     const result = await sql`INSERT INTO users (username, password) VALUES (${username}, ${hashedPassword}) RETURNING user_id`;
     const userId = result.rows[0].user_id;
@@ -39,6 +39,9 @@ export const createUser = async (username: string, password: string) => {
     // Set default tooth values
     const defaultToothValues = JSON.stringify(procedureCosts);
     await sql`INSERT INTO tooth_values (user_id, tooth_data) VALUES (${userId}, ${defaultToothValues}::jsonb)`;
+
+    // Console log
+    console.log(`Created new user with id ${userId}`);
 
 };
 
