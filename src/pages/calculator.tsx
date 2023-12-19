@@ -79,12 +79,12 @@ const CopayCalculator = () => {
 
     // Calculations
     const calculateUninsuredCost = () => {
-        return procedureCosts[selectedTooth];
+        return procedureCosts[selectedTooth as keyof typeof procedureCosts];
     };
 
     const calculateInNetworkCopay = () => {
         // Parse values to ensure they are numbers
-        const uninsuredCost = parseFloat(procedureCosts[selectedTooth]);
+        const uninsuredCost = procedureCosts[selectedTooth as keyof typeof procedureCosts];
         const coverageRate = parseFloat(contractedFeePercentage) / 100;
         const benefitsRemain = parseFloat(benefitsRemaining);
         const deductibleAmount = isDeductibleUsed === 'No' ? parseFloat(deductible) : 0;
@@ -110,14 +110,14 @@ const CopayCalculator = () => {
     const calculateInsurancePay = () => {
         // Parse values to ensure they are numbers
         if (isDeductibleUsed === 'No') {
-            const uninsuredCost = parseFloat(procedureCosts[selectedTooth]);
+            const uninsuredCost = procedureCosts[selectedTooth as keyof typeof procedureCosts];
             const patientCopayInNetowrk = calculateInNetworkCopay();
             // should be ?
             //const deductibleAmount = parseFloat(deductible);
             return uninsuredCost + 50 - patientCopayInNetowrk;
         }
 
-        const uninsuredCost = parseFloat(procedureCosts[selectedTooth]);
+        const uninsuredCost = procedureCosts[selectedTooth as keyof typeof procedureCosts];
         const patientCopayInNetowrk = calculateInNetworkCopay();
         return uninsuredCost - patientCopayInNetowrk;
 
@@ -126,9 +126,8 @@ const CopayCalculator = () => {
     };
 
     const calculateOutNetworkCopay = () => {
-        const insuredCost = parseFloat(procedureCosts[selectedTooth]); // Uninsured cost for the selected tooth
-        const outNetworkCost = parseFloat(outOfNetworkCosts[selectedTooth]); // Out of network cost for the selected tooth
-
+        const insuredCost = procedureCosts[selectedTooth as keyof typeof procedureCosts]; // Uninsured cost for the selected tooth
+        const outNetworkCost = outOfNetworkCosts[selectedTooth as keyof typeof outOfNetworkCosts]; // Out of network cost for the selected tooth
         // Calculate the out of network copay
         let outNetworkCopay = outNetworkCost - insuredCost + calculateInNetworkCopay();
         return outNetworkCopay;
@@ -220,7 +219,7 @@ const CopayCalculator = () => {
             </Card>
 
             {/* Results Display */}
-            <Grid container spacing={3} justify="center">
+            <Grid container spacing={3} component="div">
                 <Grid item xs={12}>
 
                 </Grid>
