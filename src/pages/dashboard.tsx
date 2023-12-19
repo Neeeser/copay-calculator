@@ -16,7 +16,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     }
 
     const dev = process.env.NODE_ENV !== 'production';
-    const server = dev ? 'http://localhost:3000' : 'https://copay-calculator-andrew-neesers-projects.vercel.app';
+    const server = dev ? 'http://localhost:3000' : 'https://copay-calculator.vercel.app/';
     const apiUrl = `${server}/api/user/validate_token`;
     console.log('apiUrl', apiUrl);
     const response = await fetch(apiUrl, {
@@ -27,7 +27,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         },
     });
 
-    console.log('response', response);
+    //console.log('response', response);
     // Redirect if the validation fails
     if (!response.ok) {
         return {

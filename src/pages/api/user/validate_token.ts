@@ -1,4 +1,4 @@
-// pages/api/validate.ts
+// pages/api/validate_token.ts
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
@@ -33,6 +33,7 @@ export default function handler(
                 if (error) {
                     return res.status(401).json({ valid: false, message: 'Invalid token.' });
                 }
+
                 // Token is valid
                 return res.status(200).json({ valid: true });
             });
