@@ -41,7 +41,7 @@ const CopayCalculator = () => {
         outNetworkCopay: 0,
     });
     const theme = useTheme();
-    const [toothTypes, setToothTypes] = useState([]);
+    //const [toothTypes, setToothTypes] = useState([]);
     const [benefitsRemaining, setBenefitsRemaining] = useState('');
     const [contractedFeePercentage, setContractedFeePercentage] = useState('');
     const [deductible, setDeductible] = useState('');
@@ -58,6 +58,7 @@ const CopayCalculator = () => {
     const [isInsuranceCapped, setIsInsuranceCapped] = useState(false); // B18
     const [patientDeductible, setPatientDeductible] = useState(50); // B15
     const [patientCopayAdditional, setPatientCopayAdditional] = useState(0); // B21
+    const [toothTypes, setToothTypes] = useState<string[]>([]); // Update the type of toothTypes state to string[]
 
     useEffect(() => {
         const fetchToothValues = async () => {
@@ -93,8 +94,7 @@ const CopayCalculator = () => {
                 setToothData(formattedToothData);
 
                 // Set the tooth types array
-                const [toothTypes, setToothTypes] = useState<string[]>([]); // Update the type of toothTypes state to string[]
-
+                setToothTypes(localToothTypes); // Here we update the toothTypes array
                 // Set the default tooth type to the first in the list
                 if (localToothTypes.length > 0) {
                     setSelectedTooth(localToothTypes[0]);
@@ -108,10 +108,9 @@ const CopayCalculator = () => {
     }, []);
 
 
-    // Use a separate useEffect for handleCalculate, that depends on toothData being loaded
     useEffect(() => {
-        // Only call handleCalculate if toothData has been set
-        if (Object.keys(toothData).length > 0) {
+        // Another `useEffect` for handling calculations after data fetch
+        if (Object.keys(toothData).length > 0 && selectedTooth) {
             handleCalculate();
         }
     }, [selectedTooth, benefitsRemaining, contractedFeePercentage, deductible, isDeductibleUsed, toothData]);
