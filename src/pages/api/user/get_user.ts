@@ -1,7 +1,7 @@
 // api/users/get_user.tsx
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import jwt from 'jsonwebtoken';
+import Cookies from 'cookies';
 
 type Data = {
     username?: string;
@@ -13,21 +13,16 @@ export default function handler(
     req: NextApiRequest,
     res: NextApiResponse<Data>
 ) {
-    // Check if it's a GET request
-    if (req.method !== 'GET') {
-        res.status(405).json({ error: 'Method Not Allowed' });
-        return;
-    }
+    // Initialize Cookies with the current request and response
+    const cookies = new Cookies(req, res);
+    const token = cookies.get('token'); // Get the token from HttpOnly cookie
 
-    // Extract the token from the Authorization header
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.split(' ')[1]; // "Bearer <token>"
 
-    // Ensure the token exists
     if (!token) {
         res.status(401).json({ error: 'No token provided' });
         return;
     }
+
 
     // Verify and decode the token
     try {

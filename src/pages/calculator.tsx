@@ -19,28 +19,20 @@ import {
     Box,
     Grid
 } from '@mui/material';
-import { calculatePatientCopayInNetwork } from '@/utils/calculations';
+interface Tooth {
+    insuredPrice: number;
+    outOfNetworkPrice: number;
+}
+
+// Define the structure for the toothData state
+interface ToothData {
+    [key: string]: Tooth;
+}
+
 
 const CopayCalculator = () => {
-    const theme = useTheme();
 
-    // Assumed values for illustration. Replace with actual values from your spreadsheet
-    const procedureCosts = {
-        Molar: 1259,
-        Premolar: 1057,
-        Anterior: 1015,
-        MolarRetreatment: 1553,
-        PremolarRetreatment: 1316,
-        AnteriorRetreatment: 982,
-    };
-    const outOfNetworkCosts = {
-        Molar: 1795,
-        Premolar: 1695,
-        Anterior: 1595,
-        MolarRetreatment: 1925,
-        PremolarRetreatment: 1795,
-        AnteriorRetreatment: 1695,
-    };
+
 
     const [displayResults, setDisplayResults] = useState({
         uninsuredCost: 0,
@@ -48,13 +40,16 @@ const CopayCalculator = () => {
         insurancePay: 0,
         outNetworkCopay: 0,
     });
-
-
-    const [selectedTooth, setSelectedTooth] = useState('Molar');
+    const theme = useTheme();
+    const [toothTypes, setToothTypes] = useState([]);
     const [benefitsRemaining, setBenefitsRemaining] = useState('');
     const [contractedFeePercentage, setContractedFeePercentage] = useState('');
     const [deductible, setDeductible] = useState('');
     const [isDeductibleUsed, setIsDeductibleUsed] = useState('No');
+
+
+    const [toothData, setToothData] = useState<ToothData>({});
+    const [selectedTooth, setSelectedTooth] = useState<string>('');
 
     // State variables
     const [isPatientInsured, setIsPatientInsured] = useState(true); // B16
@@ -65,35 +60,98 @@ const CopayCalculator = () => {
     const [patientCopayAdditional, setPatientCopayAdditional] = useState(0); // B21
 
     useEffect(() => {
-        handleCalculate();
-    }, [selectedTooth, benefitsRemaining, contractedFeePercentage, deductible, isDeductibleUsed]); // Add other dependencies if needed
+        const fetchToothValues = async () => {
+            try {
+                const response = await fetch('/api/user/get_tooth_values', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const result = await response.json();
+                const fetchedToothData = result.toothData;
+
+                const formattedToothData: ToothData = {};
+                let localToothTypes: string[] = []; // Temporary array to store tooth types
+                Object.keys(fetchedToothData).forEach(key => {
+                    // Regular tooth type
+                    formattedToothData[key] = {
+                        insuredPrice: fetchedToothData[key][0],
+                        outOfNetworkPrice: fetchedToothData[key][2],
+                    };
+                    localToothTypes.push(key); // Add regular type
+
+                    // Retreatment tooth type
+                    formattedToothData[key + ' Retreatment'] = {
+                        insuredPrice: fetchedToothData[key][1],
+                        outOfNetworkPrice: fetchedToothData[key][3],
+                    };
+                    localToothTypes.push(key + ' Retreatment'); // Add retreatment type
+                });
+
+                setToothData(formattedToothData);
+
+                // Set the tooth types array
+                const [toothTypes, setToothTypes] = useState<string[]>([]); // Update the type of toothTypes state to string[]
+
+                // Set the default tooth type to the first in the list
+                if (localToothTypes.length > 0) {
+                    setSelectedTooth(localToothTypes[0]);
+                }
+            } catch (error) {
+                console.error('Error fetching tooth values:', error);
+            }
+        };
+
+        fetchToothValues();
+    }, []);
+
+
+    // Use a separate useEffect for handleCalculate, that depends on toothData being loaded
+    useEffect(() => {
+        // Only call handleCalculate if toothData has been set
+        if (Object.keys(toothData).length > 0) {
+            handleCalculate();
+        }
+    }, [selectedTooth, benefitsRemaining, contractedFeePercentage, deductible, isDeductibleUsed, toothData]);
 
     const handleCalculate = () => {
-        const uninsuredCost = calculateUninsuredCost();
-        const inNetworkCopay = calculateInNetworkCopay();
-        const insurancePay = calculateInsurancePay();
-        const outNetworkCopay = calculateOutNetworkCopay();
+        // Only proceed if toothData has been loaded and a tooth is selected
+        if (selectedTooth && toothData[selectedTooth]) {
+            const uninsuredCost = calculateUninsuredCost();
+            const inNetworkCopay = calculateInNetworkCopay();
+            const insurancePay = calculateInsurancePay();
+            const outNetworkCopay = calculateOutNetworkCopay();
 
-        setDisplayResults({
-            uninsuredCost,
-            inNetworkCopay,
-            insurancePay,
-            outNetworkCopay,
-        });
+            setDisplayResults({
+                uninsuredCost,
+                inNetworkCopay,
+                insurancePay,
+                outNetworkCopay,
+            });
+        }
     };
+
 
 
     // Calculations
     const calculateUninsuredCost = () => {
-        return procedureCosts[selectedTooth as keyof typeof procedureCosts];
+        // Make sure selectedTooth is not an empty string
+        if (selectedTooth && toothData[selectedTooth]) {
+            return toothData[selectedTooth].insuredPrice;
+        }
+        return 0; // Return 0 or a default value if no tooth is selected
     };
 
     const calculateInNetworkCopay = () => {
         // Parse values to ensure they are numbers
-        const uninsuredCost = procedureCosts[selectedTooth as keyof typeof procedureCosts];
+
+        const uninsuredCost = toothData[selectedTooth].insuredPrice;
         const coverageRate = parseFloat(contractedFeePercentage) / 100;
         const benefitsRemain = parseFloat(benefitsRemaining);
         const deductibleAmount = isDeductibleUsed === 'No' ? parseFloat(deductible) : 0;
+
 
         // Calculate the amount covered by insurance, capped at the benefits remaining
         let insuranceCoverage = Math.min(uninsuredCost * coverageRate, benefitsRemain);
@@ -116,14 +174,15 @@ const CopayCalculator = () => {
     const calculateInsurancePay = () => {
         // Parse values to ensure they are numbers
         if (isDeductibleUsed === 'No') {
-            const uninsuredCost = procedureCosts[selectedTooth as keyof typeof procedureCosts];
+            const uninsuredCost = toothData[selectedTooth].insuredPrice;
+
             const patientCopayInNetowrk = calculateInNetworkCopay();
             // should be ?
             //const deductibleAmount = parseFloat(deductible);
             return uninsuredCost + 50 - patientCopayInNetowrk;
         }
 
-        const uninsuredCost = procedureCosts[selectedTooth as keyof typeof procedureCosts];
+        const uninsuredCost = toothData[selectedTooth].insuredPrice;
         const patientCopayInNetowrk = calculateInNetworkCopay();
         return uninsuredCost - patientCopayInNetowrk;
 
@@ -132,8 +191,8 @@ const CopayCalculator = () => {
     };
 
     const calculateOutNetworkCopay = () => {
-        const insuredCost = procedureCosts[selectedTooth as keyof typeof procedureCosts]; // Uninsured cost for the selected tooth
-        const outNetworkCost = outOfNetworkCosts[selectedTooth as keyof typeof outOfNetworkCosts]; // Out of network cost for the selected tooth
+        const insuredCost = toothData[selectedTooth].insuredPrice; // Uninsured cost for the selected tooth
+        const outNetworkCost = toothData[selectedTooth].outOfNetworkPrice; // Out of network cost for the selected tooth
         // Calculate the out of network copay
         let outNetworkCopay = outNetworkCost - insuredCost + calculateInNetworkCopay();
         return outNetworkCopay;
@@ -158,13 +217,15 @@ const CopayCalculator = () => {
                                     <Select
                                         value={selectedTooth}
                                         label="Tooth Type"
-                                        onChange={(e) => setSelectedTooth(e.target.value)}
+                                        onChange={(e) => setSelectedTooth(e.target.value as string)}
                                     >
-                                        <MenuItem value="Molar">Molar</MenuItem>
-                                        <MenuItem value="Premolar">Premolar</MenuItem>
-                                        <MenuItem value="Anterior">Anterior</MenuItem>
-                                        {/* ... other tooth types */}
+                                        {toothTypes.map((toothType) => (
+                                            <MenuItem key={toothType} value={toothType}>
+                                                {toothType}
+                                            </MenuItem>
+                                        ))}
                                     </Select>
+
                                 </FormControl>
                             </Grid>
 

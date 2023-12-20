@@ -21,35 +21,33 @@ const Topbar = (): JSX.Element => {
     // Assuming openMenuId is a string or null
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-    const [username, setUsername] = useState('Guest');
+    const [username, setUsername] = useState('');
 
     useEffect(() => {
         const fetchUsername = async () => {
-            const token = Cookies.get('token');
-            if (token) {
-                try {
-                    const response = await fetch('/api/users/get_user', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch user data');
-                    }
-                    const data = await response.json();
-                    if (data.username) {
-                        setUsername(data.username);
-                    }
-                } catch (error) {
-                    console.error('Error fetching username:', error);
+            try {
+                // Make a request to the server endpoint that can access HttpOnly cookies
+                const response = await fetch('/api/user/get_user', {
+                    method: 'GET',
+                    credentials: 'include' // Include credentials to ensure cookies are sent
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
+
+                const data = await response.json();
+
+                if (data.username) {
+                    setUsername(data.username);
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
             }
         };
 
         fetchUsername();
     }, []);
-
 
     const mock = [
         {
@@ -119,7 +117,7 @@ const Topbar = (): JSX.Element => {
             pages: [
                 {
                     title: 'Copay Calculator',
-                    href: '#',
+                    href: '/calculator',
                     icon: (
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -140,7 +138,7 @@ const Topbar = (): JSX.Element => {
                 },
                 {
                     title: 'Tooth Prices',
-                    href: '#',
+                    href: '/tooth-prices',
                     icon: (
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

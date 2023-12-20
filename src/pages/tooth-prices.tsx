@@ -1,5 +1,5 @@
 // pages/tooth-prices.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Table,
     TableBody,
@@ -12,8 +12,7 @@ import {
     TextField,
     Button,
     Card,
-    CardContent,
-    Box
+    CardContent
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -23,79 +22,232 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import Topbar from '../components/Topbar';
 import { withAuth } from '../utils/withAuth';
 
-export const getServerSideProps = withAuth();
-
+// Adjusted ToothEntry to be a dictionary type
 interface ToothEntry {
-    id: number;
-    name: string;
-    price: number;
-    retreatmentPrice: number;
+    [key: string]: {
+        price: number; // Price
+        retreatmentPrice: number; // Retreatment Price
+        outOfNetworkPrice: number; // Out of Network
+        outOfNetworkRetreatment: number; // Out of Network Retreatment
+    };
 }
 
-export default function ToothPrices() {
-    const [toothEntries, setToothEntries] = useState<ToothEntry[]>([]);
-    const [newTooth, setNewTooth] = useState({ name: '', price: '', retreatmentPrice: '' });
+interface ToothPrices {
+    [key: string]: number[];
+}
 
+export const getServerSideProps = withAuth();
+
+export default function ToothPrices() {
+    const [toothEntries, setToothEntries] = useState<ToothEntry>({});
+    const [newTooth, setNewTooth] = useState({ name: '', price: '', retreatmentPrice: '', outOfNetworkPrice: '', outOfNetworkRetreatment: '' });
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editFormData, setEditFormData] = useState({
+        name: '',
+        price: '',
+        retreatmentPrice: '',
+        outOfNetworkPrice: '', // Add Out of Network
+        outOfNetworkRetreatment: '', // Add Out of Network Retreatment
+    });
+
+    // Helper function to check if a string is a valid number
     const isValidNumber = (value: string) => !isNaN(parseFloat(value)) && isFinite(parseFloat(value));
 
-    const canAdd = newTooth.name && isValidNumber(newTooth.price) && isValidNumber(newTooth.retreatmentPrice);
-    const [editingId, setEditingId] = useState<number | null>(null);
-    const [editFormData, setEditFormData] = useState({ name: '', price: '', retreatmentPrice: '' });
-
+    // Function to format number input
     const formatNumberInput = (value: string) => {
-        // Return the value as is if it's empty or matches the numeric format
-        if (value === '' || (/^\d*\.?\d{0,2}$/.test(value))) {
+        if (value === '' || /^\d*\.?\d{0,2}$/.test(value)) {
             return value;
         }
-        // If the value is numeric but doesn't match the format (e.g., too many decimal places), format it
         if (!isNaN(parseFloat(value)) && isFinite(parseFloat(value))) {
             return parseFloat(value).toFixed(2);
         }
-        // If the value is not numeric, return an empty string
         return '';
     };
 
-    const handleAddTooth = () => {
-        if (canAdd) {
-            const newEntry: ToothEntry = {
-                id: toothEntries.length + 1,
-                name: newTooth.name,
-                price: parseFloat(newTooth.price),
-                retreatmentPrice: parseFloat(newTooth.retreatmentPrice),
-            };
-            setToothEntries([...toothEntries, newEntry]);
-            setNewTooth({ name: '', price: '', retreatmentPrice: '' }); // Reset input fields
+    // Fetch tooth values from the server
+    const fetchToothValues = async () => {
+        try {
+            const response = await fetch('/api/user/get_tooth_values', {
+                method: 'GET',
+                credentials: 'include',
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const result = await response.json();
+            const data = result.toothData; // Access the toothData property of the response
+
+            const entries: ToothEntry = {};
+            Object.keys(data).forEach(key => {
+                const [price, retreatmentPrice, outOfNetworkPrice, outOfNetworkRetreatment] = data[key];
+                if (
+                    typeof price === 'number' &&
+                    typeof retreatmentPrice === 'number' &&
+                    typeof outOfNetworkPrice === 'number' &&
+                    typeof outOfNetworkRetreatment === 'number'
+                ) {
+                    entries[key] = { price, retreatmentPrice, outOfNetworkPrice, outOfNetworkRetreatment };
+                } else {
+                    console.warn(`Invalid price format for key: ${key}`);
+                }
+            });
+            setToothEntries(entries);
+        } catch (error) {
+            console.error('Error fetching tooth values:', error);
         }
     };
 
-    const handleRemoveTooth = (id: number) => {
-        setToothEntries(toothEntries.filter(entry => entry.id !== id));
-    };
-    const startEdit = (row: ToothEntry) => {
-        setEditingId(row.id);
-        setEditFormData({ name: row.name, price: row.price.toString(), retreatmentPrice: row.retreatmentPrice.toString() });
+
+    useEffect(() => {
+        fetchToothValues();
+    }, []);
+
+    // Transform the toothEntries to match the expected array format
+    const transformToothEntries = (toothEntries: ToothEntry): ToothPrices => {
+        const transformed: ToothPrices = {};
+        Object.keys(toothEntries).forEach(toothName => {
+            const prices = toothEntries[toothName];
+            transformed[toothName] = [
+                prices.price,
+                prices.retreatmentPrice,
+                prices.outOfNetworkPrice,
+                prices.outOfNetworkRetreatment
+            ];
+        });
+        return transformed;
     };
 
+
+    // Update tooth values on the server
+    const updateToothValues = async (toothEntries: ToothEntry) => {
+        // Transform the entries into the array format
+        const toothData = transformToothEntries(toothEntries);
+        try {
+            const response = await fetch('/api/user/update_tooth_values', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({ toothData }),
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const responseData = await response.json();
+            console.log('Updated tooth values:', responseData);
+        } catch (error) {
+            console.error('Error updating tooth values:', error);
+        }
+    };
+
+    const canAddTooth = () => {
+        return (
+            newTooth.name.trim() !== '' &&
+            isValidNumber(newTooth.price) &&
+            isValidNumber(newTooth.retreatmentPrice) &&
+            isValidNumber(newTooth.outOfNetworkPrice) &&
+            isValidNumber(newTooth.outOfNetworkRetreatment)
+        );
+    };
+
+    // Add a new tooth entry
+    const handleAddTooth = async () => {
+        // Check that all fields are filled in
+        if (
+            newTooth.name &&
+            isValidNumber(newTooth.price) &&
+            isValidNumber(newTooth.retreatmentPrice) &&
+            isValidNumber(newTooth.outOfNetworkPrice) &&
+            isValidNumber(newTooth.outOfNetworkRetreatment)
+        ) {
+            const newEntry = {
+                price: parseFloat(newTooth.price),
+                retreatmentPrice: parseFloat(newTooth.retreatmentPrice),
+                outOfNetworkPrice: parseFloat(newTooth.outOfNetworkPrice),
+                outOfNetworkRetreatment: parseFloat(newTooth.outOfNetworkRetreatment),
+            };
+
+            const updatedEntries = {
+                ...toothEntries,
+                [newTooth.name]: newEntry,
+            };
+
+            setToothEntries(updatedEntries);
+            setNewTooth({ name: '', price: '', retreatmentPrice: '', outOfNetworkPrice: '', outOfNetworkRetreatment: '' });
+            await updateToothValues(updatedEntries);
+            fetchToothValues();
+        } else {
+            // Alert the user that all fields must be filled
+            alert("Please fill in all fields before adding a new tooth.");
+        }
+    };
+
+
+    // Remove a tooth entry
+    const handleRemoveTooth = (toothName: string) => {
+        const { [toothName]: _, ...remainingEntries } = toothEntries;
+        setToothEntries(remainingEntries);
+        updateToothValues(remainingEntries);
+    };
+
+    // Start editing a tooth entry
+    const startEdit = (toothName: string, toothData: {
+        price: number,
+        retreatmentPrice: number,
+        outOfNetworkPrice: number,
+        outOfNetworkRetreatment: number,
+    }) => {
+        setEditingId(toothName);
+        setEditFormData({
+            name: toothName,
+            price: toothData.price.toString(),
+            retreatmentPrice: toothData.retreatmentPrice.toString(),
+            outOfNetworkPrice: toothData.outOfNetworkPrice.toString(), // Include Out of Network
+            outOfNetworkRetreatment: toothData.outOfNetworkRetreatment.toString(), // Include Out of Network Retreatment
+        });
+    };
+
+    // Cancel editing a tooth entry
     const cancelEdit = () => {
         setEditingId(null);
     };
 
+    // Save edits to a tooth entry
+    const saveEdit = async () => {
+        if (
+            editFormData.name &&
+            isValidNumber(editFormData.price) &&
+            isValidNumber(editFormData.retreatmentPrice) &&
+            isValidNumber(editFormData.outOfNetworkPrice) &&
+            isValidNumber(editFormData.outOfNetworkRetreatment)
+        ) {
+            const updatedEntry = {
+                price: parseFloat(editFormData.price),
+                retreatmentPrice: parseFloat(editFormData.retreatmentPrice),
+                outOfNetworkPrice: parseFloat(editFormData.outOfNetworkPrice),
+                outOfNetworkRetreatment: parseFloat(editFormData.outOfNetworkRetreatment),
+            };
 
-    const saveEdit = (id: number) => {
-        // Make sure the edited values are numbers before saving
-        if (isValidNumber(editFormData.price) && isValidNumber(editFormData.retreatmentPrice)) {
-            const updatedEntries = toothEntries.map(entry =>
-                entry.id === id ? {
-                    ...entry,
-                    name: editFormData.name,
-                    price: parseFloat(parseFloat(editFormData.price).toFixed(2)),
-                    retreatmentPrice: parseFloat(parseFloat(editFormData.retreatmentPrice).toFixed(2))
-                } : entry
-            );
+            const updatedEntries = {
+                ...toothEntries,
+                [editFormData.name]: updatedEntry,
+            };
+
+            if (editingId !== editFormData.name) {
+                // Remove the old entry if the name was changed
+                if (editingId !== null) {
+                    delete updatedEntries[editingId];
+                }
+            }
+
             setToothEntries(updatedEntries);
             setEditingId(null);
+            await updateToothValues(updatedEntries);
+            fetchToothValues();
         }
     };
+
 
 
     return (
@@ -110,15 +262,17 @@ export default function ToothPrices() {
                                     <TableCell>Tooth</TableCell>
                                     <TableCell align="left">Price</TableCell>
                                     <TableCell align="left">Retreatment Price</TableCell>
+                                    <TableCell align="left">Out of Network</TableCell>
+                                    <TableCell align="left">Out of Network Retreatment</TableCell>
                                     <TableCell align="left">Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {toothEntries.map((row) => (
-                                    <TableRow key={row.id}>
-                                        {editingId === row.id ? (
+                                {Object.entries(toothEntries).map(([toothName, toothData]) => (
+                                    <TableRow key={toothName}>
+                                        {editingId === toothName ? (
+                                            // Editable Cells
                                             <>
-                                                {/* Editable Cells */}
                                                 <TableCell component="th" scope="row">
                                                     <TextField
                                                         fullWidth
@@ -141,7 +295,22 @@ export default function ToothPrices() {
                                                     />
                                                 </TableCell>
                                                 <TableCell align="left">
-                                                    <IconButton onClick={() => saveEdit(row.id)}>
+                                                    <TextField
+                                                        fullWidth
+                                                        value={editFormData.outOfNetworkPrice}
+                                                        onChange={(e) => setEditFormData({ ...editFormData, outOfNetworkPrice: formatNumberInput(e.target.value) })}
+                                                    />
+                                                </TableCell>
+                                                <TableCell align="left">
+                                                    <TextField
+                                                        fullWidth
+                                                        value={editFormData.outOfNetworkRetreatment}
+                                                        onChange={(e) => setEditFormData({ ...editFormData, outOfNetworkRetreatment: formatNumberInput(e.target.value) })}
+                                                    />
+                                                </TableCell>
+
+                                                <TableCell align="left">
+                                                    <IconButton onClick={() => saveEdit()}>
                                                         <SaveIcon />
                                                     </IconButton>
                                                     <IconButton onClick={cancelEdit}>
@@ -150,16 +319,18 @@ export default function ToothPrices() {
                                                 </TableCell>
                                             </>
                                         ) : (
+                                            // Read-Only Cells
                                             <>
-                                                {/* Read-Only Cells */}
-                                                <TableCell component="th" scope="row">{row.name}</TableCell>
-                                                <TableCell align="left">{`$${row.price.toFixed(2)}`}</TableCell>
-                                                <TableCell align="left">{`$${row.retreatmentPrice.toFixed(2)}`}</TableCell>
+                                                <TableCell component="th" scope="row">{toothName}</TableCell>
+                                                <TableCell align="left">{`$${toothData.price.toFixed(2)}`}</TableCell>
+                                                <TableCell align="left">{`$${toothData.retreatmentPrice.toFixed(2)}`}</TableCell>
+                                                <TableCell align="left">{`$${toothData.outOfNetworkPrice.toFixed(2)}`}</TableCell>
+                                                <TableCell align="left">{`$${toothData.outOfNetworkRetreatment.toFixed(2)}`}</TableCell>
                                                 <TableCell align="left">
-                                                    <IconButton onClick={() => startEdit(row)}>
+                                                    <IconButton onClick={() => startEdit(toothName, toothData)}>
                                                         <EditIcon />
                                                     </IconButton>
-                                                    <IconButton onClick={() => handleRemoveTooth(row.id)}>
+                                                    <IconButton onClick={() => handleRemoveTooth(toothName)}>
                                                         <DeleteIcon />
                                                     </IconButton>
                                                 </TableCell>
@@ -169,35 +340,45 @@ export default function ToothPrices() {
                                 ))}
                                 <TableRow>
                                     <TableCell>
-                                        <TextField label="Tooth Name" value={newTooth.name} onChange={(e) => setNewTooth({ ...newTooth, name: e.target.value })} />
+                                        <TextField
+                                            label="Tooth Name"
+                                            value={newTooth.name}
+                                            onChange={(e) => setNewTooth({ ...newTooth, name: e.target.value })}
+                                        />
                                     </TableCell>
                                     <TableCell align="left">
                                         <TextField
                                             label="Price"
                                             value={newTooth.price}
-                                            onChange={(e) => {
-                                                if (isValidNumber(e.target.value) || e.target.value === '') {
-                                                    setNewTooth({ ...newTooth, price: formatNumberInput(e.target.value) });
-                                                }
-                                            }}
+                                            onChange={(e) => setNewTooth({ ...newTooth, price: formatNumberInput(e.target.value) })}
                                         />
                                     </TableCell>
                                     <TableCell align="left">
                                         <TextField
                                             label="Retreatment Price"
                                             value={newTooth.retreatmentPrice}
-                                            onChange={(e) => {
-                                                if (isValidNumber(e.target.value) || e.target.value === '') {
-                                                    setNewTooth({ ...newTooth, retreatmentPrice: formatNumberInput(e.target.value) });
-                                                }
-                                            }}
+                                            onChange={(e) => setNewTooth({ ...newTooth, retreatmentPrice: formatNumberInput(e.target.value) })}
+                                        />
+                                    </TableCell>
+                                    <TableCell align="left">
+                                        <TextField
+                                            label="Out of Network"
+                                            value={newTooth.outOfNetworkPrice}
+                                            onChange={(e) => setNewTooth({ ...newTooth, outOfNetworkPrice: formatNumberInput(e.target.value) })}
+                                        />
+                                    </TableCell>
+                                    <TableCell align="left">
+                                        <TextField
+                                            label="Out of Network Retreatment"
+                                            value={newTooth.outOfNetworkRetreatment}
+                                            onChange={(e) => setNewTooth({ ...newTooth, outOfNetworkRetreatment: formatNumberInput(e.target.value) })}
                                         />
                                     </TableCell>
                                     <TableCell align="left">
                                         <Button
                                             startIcon={<AddCircleOutlineIcon />}
                                             onClick={handleAddTooth}
-                                            disabled={!canAdd}
+                                            disabled={!canAddTooth()} // Button is disabled if canAddTooth is false
                                         >
                                             Add Tooth
                                         </Button>

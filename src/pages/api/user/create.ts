@@ -4,12 +4,9 @@ import bcrypt from 'bcryptjs';
 import { sql } from "@vercel/postgres";
 
 const procedureCosts = {
-    molar: 1795,
-    premolar: 1695,
-    anterior: 1595,
-    molarRetreatment: 1925,
-    premolarRetreatment: 1795,
-    anteriorRetreatment: 1695
+    molar: [1795, 1925, 2000, 2100],
+    premolar: [1695, 1795, 2000, 2100],
+    anterior: [1595, 1695, 2000, 2100]
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
