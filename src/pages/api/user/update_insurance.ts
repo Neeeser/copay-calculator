@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
 
             // Respond with the updated insurance data
-            res.status(200).json({ insurance: result.rows[0], message: 'Insurance updated successfully' });
+            res.status(200).json({ insurance: result.rows[0], message: 'Insurance updated successfully', insuranceId: result.rows[0].insurance_id});
         } else if (req.method === 'POST') {
             // Add a new insurance for the user
             console.log(userId, insuranceName, insuranceData)

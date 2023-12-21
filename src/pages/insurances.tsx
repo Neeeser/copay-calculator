@@ -86,6 +86,7 @@ export default function InsuranceForm() {
 
 
     const handleRemoveInsurance = async (id: string) => {
+
         try {
             const response = await fetch('/api/user/update_insurance', {
                 method: 'DELETE',
@@ -112,13 +113,50 @@ export default function InsuranceForm() {
         }
     };
 
+
+    const handleInsuranceRequest = async (insurance: InsuranceEntry, isUpdate: boolean): Promise<number | null> => {
+        try {
+            const url = '/api/user/update_insurance';
+            const method = isUpdate ? 'PUT' : 'POST';
+            insurance = convertEntryToJsonFormat(insurance) as InsuranceEntry;
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(insurance),
+                credentials: 'include', // To include cookies in the request
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Insurance request response:', result)
+
+            console.log(`Insurance entry ${isUpdate ? 'updated' : 'added'} successfully:`, result);
+
+            // Extracting the insuranceId from the nested insurance object in the result
+            const insuranceId = result?.insurance?.insurance_id;
+            return typeof insuranceId === 'number' ? insuranceId : null;
+        } catch (error) {
+            console.error(`Error ${isUpdate ? 'updating' : 'adding'} insurance entry:`, error);
+            return null;
+        }
+    };
+
     // Update the handleAddInsurance function to include website validation
-    const handleAddInsurance = () => {
+    const handleAddInsurance = async () => {
         if (newInsurance.name.trim() !== '' && isValidWebsite(newInsurance.website)) {
-            const id = new Date().getTime().toString(); // Generate a unique ID for the entry
-            const newEntry = { ...newInsurance, id };
+            const id = await handleInsuranceRequest({ ...newInsurance } as InsuranceEntry, false); // false for add
+            console.log('New insurance entry id:', id);
+            // Check if id is a number
+            if (typeof id !== 'number') {
+                console.error('Error adding insurance entry: id is not a number', id);
+                return;
+            }
+            const newEntry = { ...newInsurance, id: id.toString() }; // Convert id to string if necessary
             setInsuranceEntries([...insuranceEntries, newEntry]);
-            handleInsuranceRequest(newEntry as InsuranceEntry, false); // false for add
 
             setNewInsurance({
                 name: '',
@@ -132,8 +170,15 @@ export default function InsuranceForm() {
             alert('Please enter a valid website.');
         }
     };
+
+    const isUniqueInsuranceName = (name: string, insuranceEntries: InsuranceEntry[]): boolean => {
+        return !insuranceEntries.some(entry => entry.name.trim().toLowerCase() === name.trim().toLowerCase());
+    };
+
     // Check if the required fields for adding a new insurance are filled
-    const canAddInsurance = newInsurance.name.trim() !== '' && isValidWebsite(newInsurance.website);
+    const canAddInsurance = newInsurance.name.trim() !== '' &&
+        isValidWebsite(newInsurance.website) &&
+        isUniqueInsuranceName(newInsurance.name, insuranceEntries);
 
 
     const convertEntryToJsonFormat = (entry: InsuranceEntry): Record<string, any> => {
@@ -156,31 +201,7 @@ export default function InsuranceForm() {
     };
 
 
-    const handleInsuranceRequest = async (insurance: InsuranceEntry, isUpdate: boolean) => {
-        try {
-            const url = '/api/user/update_insurance';
-            const method = isUpdate ? 'PUT' : 'POST';
-            insurance = convertEntryToJsonFormat(insurance) as InsuranceEntry;
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
 
-                body: JSON.stringify(insurance),
-                credentials: 'include', // To include cookies in the request
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            const result = await response.json();
-            console.log(`Insurance entry ${isUpdate ? 'updated' : 'added'} successfully:`, result);
-        } catch (error) {
-            console.error(`Error ${isUpdate ? 'updating' : 'adding'} insurance entry:`, error);
-        }
-    };
 
     const fetchInsurances = async () => {
         try {
