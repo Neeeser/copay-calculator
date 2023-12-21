@@ -35,7 +35,7 @@ const Dashboard = () => {
                     <DashboardCard title="Calculator" link="/calculator" />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                    <DashboardCard title="Insurance" link="/insurance" />
+                    <DashboardCard title="Insurance" link="/insurances" />
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                     <DashboardCard title="Tooth Prices" link="/tooth-prices" />

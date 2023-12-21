@@ -24,9 +24,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const result = await sql`INSERT INTO users (username, password) VALUES (${username}, ${hashedPassword}) RETURNING user_id`;
         const userId = result.rows[0].user_id;
 
-        // Set default tooth values
-        const defaultToothValues = JSON.stringify(procedureCosts);
-        await sql`INSERT INTO tooth_values (user_id, tooth_data) VALUES (${userId}, ${defaultToothValues}::jsonb)`;
 
         // Respond with the created user ID
         res.status(201).json({ userId: userId, message: 'User created successfully' });

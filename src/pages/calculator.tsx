@@ -17,6 +17,7 @@ import {
     Button,
     Typography,
     Box,
+    CardHeader,
     Grid
 } from '@mui/material';
 interface Tooth {
@@ -28,11 +29,18 @@ interface Tooth {
 interface ToothData {
     [key: string]: Tooth;
 }
-
+interface InsuranceInfo {
+    id: string;
+    name: string;
+}
 
 const CopayCalculator = () => {
 
 
+    // Update the insurances state to use the new interface
+    const [insurances, setInsurances] = useState<InsuranceInfo[]>([]);
+    const [selectedInsurance, setSelectedInsurance] = useState<string>(''); // For the name
+    const [selectedInsuranceId, setSelectedInsuranceId] = useState<string>(''); // For the id
 
     const [displayResults, setDisplayResults] = useState({
         uninsuredCost: 0,
@@ -60,10 +68,53 @@ const CopayCalculator = () => {
     const [patientCopayAdditional, setPatientCopayAdditional] = useState(0); // B21
     const [toothTypes, setToothTypes] = useState<string[]>([]); // Update the type of toothTypes state to string[]
 
+
+    const fetchInsurances = async () => {
+        try {
+            const response = await fetch('/api/user/get_insurance', {
+                method: 'GET',
+                credentials: 'include',
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const { insurances } = await response.json();
+            setInsurances(insurances.map((insurance: { id: string; name: string; }) => ({
+                id: insurance.id,
+                name: insurance.name
+            })));
+            console.log('Fetched insurances:', insurances);
+
+            if (insurances.length > 0) {
+                // Set the selected insurance to the name of the first insurance
+                setSelectedInsurance(insurances[0].name);
+                // Also keep track of the selected insurance ID
+                setSelectedInsuranceId(insurances[0].id);
+            }
+        } catch (error) {
+            console.error('Error fetching insurance names:', error);
+        }
+    };
+
     useEffect(() => {
-        const fetchToothValues = async () => {
+        fetchInsurances();
+    }, []);
+
+    // Whenever the selectedInsurance changes, update the selectedInsuranceId as well
+    useEffect(() => {
+        const selected = insurances.find(insurance => insurance.name === selectedInsurance);
+        setSelectedInsuranceId(selected ? selected.id : '');
+    }, [selectedInsurance, insurances]);
+
+
+    useEffect(() => {
+        const fetchToothValues = async (insuranceId: string) => {
+            if (!insuranceId) {
+                // If no insurance ID is provided, clear the tooth entries
+                return;
+            }
             try {
-                const response = await fetch('/api/user/get_tooth_values', {
+                const response = await fetch(`/api/user/get_tooth_values?insurance_id=${insuranceId}`, {
                     method: 'GET',
                     credentials: 'include',
                 });
@@ -104,8 +155,8 @@ const CopayCalculator = () => {
             }
         };
 
-        fetchToothValues();
-    }, []);
+        fetchToothValues(selectedInsuranceId);
+    }, [selectedInsuranceId]);
 
 
     useEffect(() => {
@@ -177,8 +228,8 @@ const CopayCalculator = () => {
 
             const patientCopayInNetowrk = calculateInNetworkCopay();
             // should be ?
-            //const deductibleAmount = parseFloat(deductible);
-            return uninsuredCost + 50 - patientCopayInNetowrk;
+            const deductibleAmount = parseFloat(deductible);
+            return uninsuredCost + deductibleAmount - patientCopayInNetowrk;
         }
 
         const uninsuredCost = toothData[selectedTooth].insuredPrice;
@@ -201,130 +252,162 @@ const CopayCalculator = () => {
     return (
         <>
             <Topbar />
+            <Card>
+                <CardHeader
+                    title="Select Insurance"
+                    subheader="Choose an insurance to calculate Copay prices."
+                />
+                <CardContent>
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel id="insurance-select-label">Insurance</InputLabel>
+                        <Select
+                            labelId="insurance-select-label"
+                            id="insurance-select"
+                            value={selectedInsurance}
+                            label="Insurance"
+                            onChange={(event) => {
+                                const selectedName = event.target.value;
+                                setSelectedInsurance(selectedName);
+                                // Find the ID corresponding to the selected name and set it
+                                const insurance = insurances.find(ins => ins.name === selectedName);
+                                setSelectedInsuranceId(insurance ? insurance.id : '');
+                            }}
+                        >
+                            {insurances.map((insurance) => (
+                                <MenuItem key={insurance.id} value={insurance.name}>
+                                    {insurance.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
 
-            <Box p={4}>
-                <Card>
-                    <Box p={4}>
-                        <Typography variant="h4" gutterBottom>
-                            Copay Calculator
-                        </Typography>
-                        <Grid container spacing={2}>
-                            {/* Tooth Type Dropdown */}
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Tooth Type</InputLabel>
-                                    <Select
-                                        value={selectedTooth}
-                                        label="Tooth Type"
-                                        onChange={(e) => setSelectedTooth(e.target.value as string)}
-                                    >
-                                        {toothTypes.map((toothType) => (
-                                            <MenuItem key={toothType} value={toothType}>
-                                                {toothType}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
+                    </FormControl>
+                </CardContent>
+            </Card>
+            {selectedInsurance && (
+                <Box p={4}>
+                    <Card>
+                        <Box p={4}>
+                            <Typography variant="h4" gutterBottom>
+                                Copay Calculator
+                            </Typography>
+                            <Grid container spacing={2}>
+                                {/* Tooth Type Dropdown */}
+                                <Grid item xs={12} md={6}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Tooth Type</InputLabel>
+                                        <Select
+                                            value={selectedTooth}
+                                            label="Tooth Type"
+                                            onChange={(e) => setSelectedTooth(e.target.value as string)}
+                                        >
+                                            {toothTypes.map((toothType) => (
+                                                <MenuItem key={toothType} value={toothType}>
+                                                    {toothType}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
 
-                                </FormControl>
+                                    </FormControl>
+                                </Grid>
+
+                                {/* Benefits Remaining Input */}
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        label="Benefits Remaining ($)"
+                                        type="number"
+                                        fullWidth
+                                        value={benefitsRemaining}
+                                        onChange={(e) => setBenefitsRemaining(e.target.value)}
+                                    />
+                                </Grid>
+
+                                {/* Contracted Fee Percentage Input */}
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        label="Contracted Fee (%)"
+                                        type="number"
+                                        fullWidth
+                                        value={contractedFeePercentage}
+                                        onChange={(e) => setContractedFeePercentage(e.target.value)}
+                                    />
+                                </Grid>
+
+                                {/* Deductible Input */}
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        label="Deductible ($)"
+                                        type="number"
+                                        fullWidth
+                                        value={deductible}
+                                        onChange={(e) => setDeductible(e.target.value)}
+                                    />
+                                </Grid>
+
+                                {/* Deductible Already Used Dropdown */}
+                                <Grid item xs={12} md={6}>
+                                    <FormControl fullWidth>
+                                        <InputLabel>Deductible Already Used</InputLabel>
+                                        <Select
+                                            value={isDeductibleUsed}
+                                            label="Deductible Already Used"
+                                            onChange={(e) => setIsDeductibleUsed(e.target.value)}
+                                        >
+                                            <MenuItem value="Yes">Yes</MenuItem>
+                                            <MenuItem value="No">No</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
+                                {/* Calculate Button */}
+                                <Grid item xs={12}>
+                                    <Button variant="contained" color="primary" onClick={handleCalculate}>
+                                        Calculate
+                                    </Button>
+                                </Grid>
+
                             </Grid>
+                        </Box>
+                    </Card>
 
-                            {/* Benefits Remaining Input */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Benefits Remaining ($)"
-                                    type="number"
-                                    fullWidth
-                                    value={benefitsRemaining}
-                                    onChange={(e) => setBenefitsRemaining(e.target.value)}
-                                />
-                            </Grid>
-
-                            {/* Contracted Fee Percentage Input */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Contracted Fee (%)"
-                                    type="number"
-                                    fullWidth
-                                    value={contractedFeePercentage}
-                                    onChange={(e) => setContractedFeePercentage(e.target.value)}
-                                />
-                            </Grid>
-
-                            {/* Deductible Input */}
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    label="Deductible ($)"
-                                    type="number"
-                                    fullWidth
-                                    value={deductible}
-                                    onChange={(e) => setDeductible(e.target.value)}
-                                />
-                            </Grid>
-
-                            {/* Deductible Already Used Dropdown */}
-                            <Grid item xs={12} md={6}>
-                                <FormControl fullWidth>
-                                    <InputLabel>Deductible Already Used</InputLabel>
-                                    <Select
-                                        value={isDeductibleUsed}
-                                        label="Deductible Already Used"
-                                        onChange={(e) => setIsDeductibleUsed(e.target.value)}
-                                    >
-                                        <MenuItem value="Yes">Yes</MenuItem>
-                                        <MenuItem value="No">No</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            {/* Calculate Button */}
-                            <Grid item xs={12}>
-                                <Button variant="contained" color="primary" onClick={handleCalculate}>
-                                    Calculate
-                                </Button>
-                            </Grid>
+                    {/* Results Display */}
+                    <Grid container spacing={3} component="div">
+                        <Grid item xs={12}>
 
                         </Grid>
-                    </Box>
-                </Card>
-
-                {/* Results Display */}
-                <Grid container spacing={3} component="div">
-                    <Grid item xs={12}>
-
+                        {[
+                            { title: 'Uninsured Cost', value: displayResults.uninsuredCost },
+                            { title: 'Patient Copay (In Network)', value: displayResults.inNetworkCopay },
+                            { title: 'Insurance Pay', value: displayResults.insurancePay },
+                            { title: 'Patient Copay (Out of Network)', value: displayResults.outNetworkCopay },
+                        ].map((item, index) => (
+                            <Grid key={index} item xs={12} sm={6} md={3} style={{ justifyContent: 'center' }}>
+                                <Parallax tiltMaxAngleX={5} tiltMaxAngleY={5}>
+                                    <Card style={{
+                                        maxWidth: '100%', // Maximum width is 100% of its parent container
+                                        height: '400px', // Height is automatic based on its content
+                                        borderRadius: '20px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        backgroundColor: theme.palette.common.white,
+                                        margin: 'auto', // Center the card in its grid cell
+                                    }}>
+                                        <CardContent>
+                                            <Typography variant="h5" align="center">
+                                                {item.title}
+                                            </Typography>
+                                            <Typography variant="h4" align="center" color="primary">
+                                                ${isNaN(item.value) || item.value === null ? '0' : item.value.toFixed(2)}
+                                            </Typography>
+                                        </CardContent>
+                                    </Card>
+                                </Parallax>
+                            </Grid>
+                        ))}
                     </Grid>
-                    {[
-                        { title: 'Uninsured Cost', value: displayResults.uninsuredCost },
-                        { title: 'Patient Copay (In Network)', value: displayResults.inNetworkCopay },
-                        { title: 'Insurance Pay', value: displayResults.insurancePay },
-                        { title: 'Patient Copay (Out of Network)', value: displayResults.outNetworkCopay },
-                    ].map((item, index) => (
-                        <Grid key={index} item xs={12} sm={6} md={3} style={{ justifyContent: 'center' }}>
-                            <Parallax tiltMaxAngleX={5} tiltMaxAngleY={5}>
-                                <Card style={{
-                                    maxWidth: '100%', // Maximum width is 100% of its parent container
-                                    height: '400px', // Height is automatic based on its content
-                                    borderRadius: '20px',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    backgroundColor: theme.palette.common.white,
-                                    margin: 'auto', // Center the card in its grid cell
-                                }}>
-                                    <CardContent>
-                                        <Typography variant="h5" align="center">
-                                            {item.title}
-                                        </Typography>
-                                        <Typography variant="h4" align="center" color="primary">
-                                            ${isNaN(item.value) || item.value === null ? '0' : item.value.toFixed(2)}
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Parallax>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Box>
+                </Box>
+            )}
         </>
     );
 };

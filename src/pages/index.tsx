@@ -14,6 +14,9 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import { useUser } from '../contexts/UserContext';
 import { useRouter } from 'next/router';
+import { withAuth } from '../utils/withAuth';
+
+export const getServerSideProps = withAuth();
 
 const SimpleSignInForm = (): JSX.Element => {
     const [loginInfo, setLoginInfo] = useState({ username: '', password: '' });

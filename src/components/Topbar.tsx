@@ -65,6 +65,69 @@ const Topbar = (): JSX.Element => {
             groupTitle: 'Pages',
             id: 'business',
             pages: [
+                {
+                    title: 'Copay Calculator',
+                    href: '/calculator',
+                    icon: (
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width={24}
+                            height={24}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                            />
+                        </svg>
+                    ),
+                },
+                {
+                    title: 'Tooth Prices',
+                    href: '/tooth-prices',
+                    icon: (
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width={24}
+                            height={24}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                        </svg>
+                    ),
+                },
+                {
+                    title: 'Insurance',
+                    href: '/insurances',
+                    icon: (
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width={24}
+                            height={24}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                            />
+                        </svg>
+                    ),
+                },
 
                 {
                     title: 'Customers',
@@ -111,54 +174,13 @@ const Topbar = (): JSX.Element => {
 
             ],
         },
+
         {
-            groupTitle: 'Select tools',
-            id: 'select-tools',
+            groupTitle: 'Support',
+            id: 'support',
             pages: [
                 {
-                    title: 'Copay Calculator',
-                    href: '/calculator',
-                    icon: (
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width={24}
-                            height={24}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                            />
-                        </svg>
-                    ),
-                },
-                {
-                    title: 'Tooth Prices',
-                    href: '/tooth-prices',
-                    icon: (
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width={24}
-                            height={24}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
-                        </svg>
-                    ),
-                },
-                {
-                    title: 'Insurance',
+                    title: 'Insurance Numbers',
                     href: '#',
                     icon: (
                         <svg
@@ -173,15 +195,14 @@ const Topbar = (): JSX.Element => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                             />
                         </svg>
                     ),
                 },
-
-
             ],
         },
+
         {
             groupTitle: username,
             id: 'settings',
@@ -213,17 +234,9 @@ const Topbar = (): JSX.Element => {
                         </svg>
                     ),
                 },
-
-
-            ],
-        },
-        {
-            groupTitle: 'Support',
-            id: 'support',
-            pages: [
                 {
-                    title: 'Insurance Numbers',
-                    href: '#',
+                    title: 'Logout',
+                    href: '/logout',
                     icon: (
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -237,11 +250,13 @@ const Topbar = (): JSX.Element => {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                             />
                         </svg>
                     ),
                 },
+
+
             ],
         },
     ];

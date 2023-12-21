@@ -1,4 +1,4 @@
-// pages/api/users/update_tooth_values.ts
+// pages/api/user/update_tooth_values.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { sql } from '@vercel/postgres';
 import jwt from 'jsonwebtoken';
@@ -24,16 +24,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         const userId = (decoded as any).userId; // Extract user ID from the token
-        const { toothData } = req.body; // Ensure this matches the structure of the data you expect
-
-        // Update the tooth values for the user
+        const { toothData, insuranceId } = req.body; // Destructure insuranceId from the body
+        console.log(toothData, insuranceId)
+        console.log(JSON.stringify(toothData))
+        // Update the tooth values for the user and insuranceId
         const result = await sql`
-            UPDATE tooth_values
-            SET tooth_data = ${JSON.stringify(toothData)}::jsonb
-            WHERE user_id = ${userId}
-            RETURNING *;
-        `;
-
+        INSERT INTO tooth_values (user_id, insurance_id, tooth_data)
+        VALUES (${userId}, ${insuranceId}, ${JSON.stringify(toothData)}::jsonb)
+        ON CONFLICT (user_id, insurance_id)
+        DO UPDATE SET tooth_data = EXCLUDED.tooth_data
+        RETURNING *;
+    `;
         if (result.rowCount === 0) {
             return res.status(404).json({ message: 'User not found or tooth data not set' });
         }
