@@ -33,8 +33,8 @@ interface InsuranceEntry {
     password: string;
 }
 const websitePattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
-const isValidWebsite = (website: string): boolean => websitePattern.test(website);
-
+//const isValidWebsite = (website: string): boolean => websitePattern.test(website);
+const isValidWebsite = (website: string): boolean => true;
 export default function InsuranceForm() {
 
 
@@ -263,21 +263,31 @@ export default function InsuranceForm() {
                                                     />
                                                 </TableCell>
 
-                                                <TableCell align="left">
+                                                <TableCell align="left" style={{ maxWidth: '250px' }}> {/* Set a max-width to the cell */}
                                                     {editingId === insurance.id ? (
                                                         <TextField
                                                             fullWidth
+                                                            multiline
                                                             value={editFormData.website}
                                                             onChange={(e) => setEditFormData({ ...editFormData, website: e.target.value })}
                                                             error={!isValidWebsite(editFormData.website) && editFormData.website !== ''}
                                                             helperText={!isValidWebsite(editFormData.website) && editFormData.website !== '' ? "The website is not a valid URL." : ""}
+                                                            InputProps={{
+                                                                style: { whiteSpace: 'pre-wrap', wordBreak: 'break-all', maxWidth: '250px' } // Enforce wrapping
+                                                            }}
                                                         />
                                                     ) : (
-                                                        <a href={insurance.website.startsWith('http') ? insurance.website : `http://${insurance.website}`} target="_blank" rel="noopener noreferrer">
-                                                            {insurance.website}
-                                                        </a>
+                                                        <div style={{ wordBreak: 'break-all', maxWidth: '100px' }}> {/* Enforce wrapping within a max-width */}
+                                                            <a href={insurance.website.startsWith('http') ? insurance.website : `http://${insurance.website}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                style={{ wordBreak: 'break-all', display: 'inline-block', maxWidth: '100px' }}> {/* Enforce wrapping within a max-width */}
+                                                                {insurance.website}
+                                                            </a>
+                                                        </div>
                                                     )}
                                                 </TableCell>
+
                                                 <TableCell align="left">
                                                     <TextField
                                                         fullWidth

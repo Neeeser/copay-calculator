@@ -152,6 +152,8 @@ const CopayCalculator = () => {
                 }
             } catch (error) {
                 console.error('Error fetching tooth values:', error);
+                setToothData({});
+                setToothTypes([]);
             }
         };
 
