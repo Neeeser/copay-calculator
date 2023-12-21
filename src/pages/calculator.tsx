@@ -87,9 +87,9 @@ const CopayCalculator = () => {
 
             if (insurances.length > 0) {
                 // Set the selected insurance to the name of the first insurance
-                setSelectedInsurance(insurances[0].name);
-                // Also keep track of the selected insurance ID
-                setSelectedInsuranceId(insurances[0].id);
+                // setSelectedInsurance(insurances[0].name);
+                // // Also keep track of the selected insurance ID
+                // setSelectedInsuranceId(insurances[0].id);
             }
         } catch (error) {
             console.error('Error fetching insurance names:', error);
